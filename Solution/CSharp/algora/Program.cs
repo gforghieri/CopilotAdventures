@@ -1,5 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using Azure.AI.OpenAI;
+
+namespace Azure.AI.OpenAI.Tests.Samples
+{
 
 public enum DanceMove
 {
@@ -19,9 +24,10 @@ public class Forest
     public string State { get; set; }
 }
 
+
 public class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         // Initialize the state of the forest
         Forest forest = new Forest { State = "Normal" };
@@ -68,12 +74,43 @@ public class Program
 
             // Display the state of the forest after each sequence
             Console.WriteLine($"After sequence {i + 1}, the state of the forest is: {forest.State}");
+
+            // Visualize the forest using Azure AI DALLE-3
+            string imageCaption = $"After sequence {i + 1}, the state of the forest is: {forest.State}";
+            await GenerateImage(imageCaption);
         }
 
         // Display the final state of the forest after the dance is complete
         Console.WriteLine($"The final state of the forest after the dance is: {forest.State}");
+
+        // Visualize the final state of the forest using Azure AI DALLE-3
+        string finalImageCaption = $"The final state of the forest after the dance is: {forest.State}";
+        // await GenerateImage(finalImageCaption);
+    }
+
+        static async Task GenerateImage(string caption)
+        {
+            var endpoint = "YOUR_ENDPOINT";
+            var key = "YOUR_KEY";
+            string deploymentName = "dalle3";
+
+            OpenAIClient client = new(new Uri(endpoint), new AzureKeyCredential(key));
+
+            Response<ImageGenerations> imageGenerations = await client.GetImageGenerationsAsync(
+                new ImageGenerationOptions()
+                {
+                    Prompt = caption,
+                    Size = ImageSize.Size1024x1024,
+                    DeploymentName = deploymentName
+                });
+
+            // Image Generations responses provide URLs you can use to retrieve requested images
+            Uri imageUri = imageGenerations.Value.Data[0].Url;
+            
+            // Print the image URI to console:
+            Console.WriteLine(imageUri);
+    
+        }
     }
 
 }
-
-
